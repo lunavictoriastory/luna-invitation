@@ -826,8 +826,14 @@ if (personalLoading) {
 }
         setButtonsDisabled(false);
     } catch (err) {
-        setButtonsDisabled(true, `We couldn’t open this personalized proposal. ${err.message}`);
+    const personalLoading = document.getElementById("personalLoading");
+
+    if (personalLoading) {
+        personalLoading.style.display = "none";
     }
+
+    setButtonsDisabled(true, `We couldn’t open this personalized proposal. ${err.message}`);
+}
 }
 
 function escapeHtml(value) {
