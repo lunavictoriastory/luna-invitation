@@ -800,41 +800,57 @@ function setButtonsDisabled(disabled, message = "") {
 
 async function loadGodparent() {
     if (!godparentId) {
-        setButtonsDisabled(true, "This proposal link is missing its godparent ID. Please ask Mommy or Daddy for the correct link.");
+        setButtonsDisabled(
+            true,
+            "This proposal link is missing its godparent ID. Please ask Mommy or Daddy for the correct link."
+        );
         return;
     }
+
     setButtonsDisabled(true, "Preparing your special proposal…");
+
     try {
-        const res = await fetch(`${APPS_SCRIPT_URL}?id=${encodeURIComponent(godparentId)}`);
+        const res = await fetch(
+            `${APPS_SCRIPT_URL}?id=${encodeURIComponent(godparentId)}`,
+            { cache: "no-store" }
+        );
+
         const data = await res.json();
-        if (!data.success) throw new Error(data.message || "Godparent not found.");
+
+        if (!data.success) {
+            throw new Error(data.message || "Godparent not found.");
+        }
+
         currentGodparent = data;
+
         const role = String(data.role || "").trim();
-        if (!/^(ninong|ninang)$/i.test(role)) throw new Error("Godparent role is missing.");
-        const prettyRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+
+        if (!/^(ninong|ninang)$/i.test(role)) {
+            throw new Error("Godparent role is missing.");
+        }
+
+        const prettyRole =
+            role.charAt(0).toUpperCase() +
+            role.slice(1).toLowerCase();
+
         godparentRole.textContent = `${prettyRole}?`;
         acceptedRole.textContent = `${prettyRole}!`;
+
         if (personalGreeting) {
+            personalGreeting.innerHTML =
+                `Dear <strong>${escapeHtml(data.name)}</strong>,`;
             personalGreeting.style.display = "block";
-            personalGreeting.innerHTML = `Dear <strong>${escapeHtml(data.name)}</strong>,`;
-            personalGreeting.style.display = "block";
-        const personalLoading = document.getElementById("personalLoading");
-if (personalLoading) {
-    personalLoading.style.display = "none";
-}
+        }
+
         setButtonsDisabled(false);
+
     } catch (err) {
-    const personalLoading = document.getElementById("personalLoading");
-
-    if (personalLoading) {
-        personalLoading.style.display = "none";
+        setButtonsDisabled(
+            true,
+            `We couldn’t open this personalized proposal. ${err.message}`
+        );
     }
-
-    setButtonsDisabled(true, `We couldn’t open this personalized proposal. ${err.message}`);
 }
-}
-
-function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 }
 
