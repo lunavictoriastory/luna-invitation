@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Luna Victoria's Invitation</title>
+
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    min-height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background:
+        radial-gradient(circle at center, #fffdf8 0%, #f4ecdc 62%, #e8dcc5 100%);
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+.book-wrapper {
+    position: relative;
+    width: min(92vw, 512px);
+    aspect-ratio: 2 / 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    filter: drop-shadow(0 18px 22px rgba(68, 48, 27, .24));
+}
+
+/* Decorative physical-book backing. Kept behind StPageFlip so it cannot block swipes. */
+.book-wrapper::before {
+    content: "";
+    position: absolute;
+    inset: 5px -7px -9px 5px;
+    border-radius: 5px 13px 13px 5px;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            #fff9e8 0px,
+            #fff9e8 2px,
+            #e6d6ac 3px,
+            #fff9e8 4px
+        );
+    border-right: 4px solid #b88b35;
+    border-bottom: 4px solid #c49b4c;
+    box-shadow:
+        6px 7px 0 rgba(160, 119, 48, .30),
+        0 20px 35px rgba(55, 37, 20, .18);
+    pointer-events: none;
+}
+
+#book {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.page {
+    position: relative;
+    overflow: hidden;
+    background: #fffdf7;
+}
+
+.page video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.rsvp-yes,
+.rsvp-no {
+    position: absolute;
+    z-index: 1000;
+    cursor: pointer;
+    display: block;
+}
+
+.rsvp-yes {
+    left: 24%;
+    top: 48.7%;
+    width: 52%;
+    height: 6.2%;
+}
+
+.rsvp-no {
+    left: 24%;
+    top: 57.3%;
+    width: 52%;
+    height: 6.2%;
+}
+
+/* First-page instruction */
+.open-hint {
+    position: fixed;
+    left: 50%;
+    bottom: max(18px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 16px;
+    white-space: nowrap;
+    color: #755522;
+    background: rgba(255, 250, 238, .94);
+    border: 1px solid rgba(178, 136, 54, .48);
+    border-radius: 999px;
+    box-shadow: 0 5px 16px rgba(61, 42, 21, .14);
+    font-size: 13px;
+    letter-spacing: .35px;
+    pointer-events: none;
+    transition: opacity .45s ease, transform .45s ease;
+}
+
+.open-hint.hide {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+}
+
+.swipe-arrow {
+    display: inline-block;
+    font-size: 18px;
+    animation: swipeLeft 1.35s ease-in-out infinite;
+}
+
+@keyframes swipeLeft {
+    0%, 100% { transform: translateX(5px); opacity: .45; }
+    50% { transform: translateX(-5px); opacity: 1; }
+}
+
+/* A subtle corner cue makes the cover visibly turnable on phones. */
+.corner-cue {
+    position: fixed;
+    right: max(4vw, 14px);
+    bottom: max(66px, calc(env(safe-area-inset-bottom) + 64px));
+    z-index: 9998;
+    width: 34px;
+    height: 34px;
+    pointer-events: none;
+    opacity: .78;
+    transition: opacity .35s ease;
+}
+
+.corner-cue::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-left: 28px solid transparent;
+    border-top: 28px solid rgba(200, 164, 87, .82);
+    filter: drop-shadow(-2px -2px 2px rgba(70, 48, 23, .16));
+    transform-origin: bottom right;
+    animation: liftCorner 1.8s ease-in-out infinite;
+}
+
+.corner-cue.hide {
+    opacity: 0;
+}
+
+@keyframes liftCorner {
+    0%, 100% { transform: scale(.78) rotate(0deg); }
+    50% { transform: scale(1) rotate(-6deg); }
+}
+
+@media (min-width: 601px) {
+    .corner-cue {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .book-wrapper {
+        width: min(91vw, 480px);
+    }
+}
+
+/* Elegant storybook page progress */
+.page-progress {
+    position: fixed;
+    left: 50%;
+    top: max(12px, env(safe-area-inset-top));
+    transform: translateX(-50%);
+    z-index: 9999;
+    min-width: 74px;
+    padding: 7px 13px;
+    text-align: center;
+    white-space: nowrap;
+    color: #755522;
+    background: rgba(255, 250, 238, .94);
+    border: 1px solid rgba(178, 136, 54, .48);
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(61, 42, 21, .12);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 12px;
+    letter-spacing: .55px;
+    pointer-events: none;
+    transition: opacity .25s ease;
+}
+
+.page-progress .ornament {
+    color: #b18a3e;
+    padding: 0 5px;
+}
+
+@media (max-height: 650px) {
+    .page-progress {
+        top: max(6px, env(safe-area-inset-top));
+        padding: 5px 11px;
+        font-size: 11px;
+    }
+}
+
+
+.magic-layer{display:none !important}
+.magic-spark{position:absolute;left:50%;top:50%;width:var(--size);height:var(--size);opacity:0;transform:translate(-50%,-50%) scale(.15);animation:magicBurst var(--duration) ease-out var(--delay) forwards;filter:drop-shadow(0 0 7px rgba(255,220,110,.95))}
+.magic-spark:before,.magic-spark:after{content:"";position:absolute;inset:0;background:linear-gradient(#fff,#ffe9a2 45%,#c99532);border-radius:100% 0 100% 0}
+.magic-spark:after{transform:rotate(90deg)}
+.magic-dot{border-radius:50%;background:radial-gradient(circle,#fff 0 18%,#fff0a8 30%,#d4a13b 60%,transparent 72%)}
+.magic-dot:before,.magic-dot:after{display:none}
+@keyframes magicBurst{
+0%{opacity:0;transform:translate(-50%,-50%) translate(0,0) scale(.1) rotate(0)}
+15%{opacity:1}
+50%{opacity:1;transform:translate(-50%,-50%) translate(calc(var(--x)*.58),calc(var(--y)*.58)) scale(1.25) rotate(120deg)}
+100%{opacity:0;transform:translate(-50%,-50%) translate(var(--x),var(--y)) scale(.2) rotate(230deg)}
+}
+.magic-flash{position:absolute;left:50%;top:50%;width:min(80vw,460px);aspect-ratio:1;border-radius:50%;opacity:0;background:radial-gradient(circle,rgba(255,255,255,.78),rgba(255,234,158,.42) 24%,rgba(225,177,72,.14) 48%,transparent 72%);animation:magicFlash 1.15s ease-out forwards}
+@keyframes magicFlash{0%{opacity:0;transform:translate(-50%,-50%) scale(.12)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.3)}}
+
+
+/* =========================================
+   CINEMATIC WHITE FAIRY DUST — INSIDE BOOK
+   Fine, soft, movie-like sparkle particles.
+   ========================================= */
+.book-magic {
+    position: absolute;
+    inset: 0;
+    z-index: 2500;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: 4px 12px 12px 4px;
+}
+
+.book-twinkle {
+    position: absolute;
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    opacity: 0;
+    background: radial-gradient(
+        circle,
+        rgba(255,255,255,1) 0 18%,
+        rgba(245,248,255,.95) 22%,
+        rgba(225,232,242,.58) 45%,
+        rgba(255,255,255,0) 72%
+    );
+    filter: drop-shadow(0 0 2px rgba(255,255,255,.9))
+            drop-shadow(0 0 5px rgba(235,242,255,.48));
+    animation: cinematicBlink var(--t) ease-in-out var(--d) infinite;
+}
+
+.book-twinkle.star {
+    border-radius: 0;
+    background: none;
+}
+
+.book-twinkle.star::before,
+.book-twinkle.star::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,.96) 42%,
+        #fff 50%,
+        rgba(255,255,255,.96) 58%,
+        rgba(255,255,255,0)
+    );
+    transform: translate(-50%,-50%);
+    border-radius: 50%;
+    filter: blur(.15px);
+}
+
+.book-twinkle.star::before {
+    width: 1.4px;
+    height: 100%;
+}
+
+.book-twinkle.star::after {
+    width: 100%;
+    height: 1.4px;
+}
+
+@keyframes cinematicBlink {
+    0%, 100% { opacity: 0; transform: scale(.25); }
+    18% { opacity: .18; }
+    38% { opacity: .72; transform: scale(.7); }
+    48% { opacity: 1; transform: scale(1); }
+    60% { opacity: .4; transform: scale(.72); }
+    78% { opacity: .82; }
+}
+
+/* Fine dust that sweeps across the page after opening */
+.trail-dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    opacity: 0;
+    background: radial-gradient(
+        circle,
+        #fff 0 20%,
+        rgba(248,250,255,.92) 30%,
+        rgba(225,232,242,.42) 55%,
+        transparent 74%
+    );
+    filter: drop-shadow(0 0 3px rgba(255,255,255,.7));
+    animation: cinematicDust 1.75s ease-out var(--delay) forwards;
+}
+
+.trail-dot.bright {
+    border-radius: 0;
+    background: none;
+}
+
+.trail-dot.bright::before,
+.trail-dot.bright::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: linear-gradient(
+        transparent,
+        rgba(255,255,255,.95),
+        #fff,
+        rgba(255,255,255,.95),
+        transparent
+    );
+    transform: translate(-50%,-50%);
+}
+
+.trail-dot.bright::before { width: 1px; height: 100%; }
+.trail-dot.bright::after  { width: 100%; height: 1px; }
+
+@keyframes cinematicDust {
+    0% {
+        opacity: 0;
+        transform: translate(-50%,-50%) translate(var(--sx),var(--sy)) scale(.15);
+    }
+    20% { opacity: .25; }
+    42% { opacity: .95; }
+    72% {
+        opacity: .72;
+        transform: translate(-50%,-50%) translate(var(--mx),var(--my)) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%,-50%) translate(var(--ex),var(--ey)) scale(.3);
+    }
+}
+
+
+/* =========================================
+   GODPARENT PROPOSAL + ACCEPTANCE INTRO
+   ========================================= */
+.intro-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 35%, rgba(255,255,255,.98) 0%, rgba(255,250,238,.98) 48%, rgba(234,220,194,.98) 100%);
+    transition: opacity .75s ease, visibility .75s ease;
+}
+.intro-screen.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+.intro-card {
+    position: relative;
+    width: min(92vw, 480px);
+    max-height: 92dvh;
+    overflow: auto;
+    padding: 42px 30px 34px;
+    text-align: center;
+    color: #60471f;
+    background: rgba(255,253,247,.94);
+    border: 1px solid rgba(177,138,62,.5);
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(70,48,24,.18), inset 0 0 0 5px rgba(255,255,255,.5);
+}
+.intro-card::before {
+    content:"✦";
+    display:block;
+    margin-bottom:13px;
+    color:#b18a3e;
+    font-size:25px;
+    text-shadow:0 0 12px rgba(218,180,95,.55);
+}
+.intro-eyebrow { font-size:11px; letter-spacing:2.6px; text-transform:uppercase; color:#9b7b3e; margin-bottom:14px; }
+.intro-card h1 { font-size: clamp(27px, 7vw, 39px); line-height:1.08; font-weight:normal; color:#8b682d; margin:12px 0 20px; }
+.intro-card p { font-size:14.5px; line-height:1.72; margin:0 auto 13px; max-width:390px; }
+.intro-question { margin:24px 0 8px !important; font-size:18px !important; line-height:1.45 !important; }
+.intro-question strong { display:block; margin-top:3px; font-size:28px; font-weight:normal; color:#9b722d; }
+.intro-signoff { margin:18px 0 23px !important; font-style:italic; }
+.intro-signoff strong { display:block; margin-top:3px; font-style:normal; font-size:18px; color:#8a672e; }
+.intro-actions { display:grid; gap:11px; margin-top:12px; }
+.intro-btn {
+    appearance:none; border:0; width:100%; min-height:49px; border-radius:999px; cursor:pointer;
+    font-family:Georgia,"Times New Roman",serif; font-size:14px; letter-spacing:.25px;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.intro-btn:active { transform:scale(.985); }
+.intro-btn.yes { color:#fffdf7; background:linear-gradient(135deg,#b48a3b,#8e6725); box-shadow:0 8px 22px rgba(142,103,37,.25); }
+.intro-btn.no { color:#735724; background:#fffaf0; border:1px solid rgba(177,138,62,.48); }
+.intro-btn.open-book { color:#fffdf7; background:linear-gradient(135deg,#b48a3b,#8e6725); box-shadow:0 8px 24px rgba(142,103,37,.28); margin-top:10px; }
+.acceptance-heart { font-size:34px; margin:4px 0 6px; animation:tinyHeart 1.7s ease-in-out infinite; }
+@keyframes tinyHeart { 0%,100%{transform:scale(1)} 50%{transform:scale(1.13)} }
+.acceptance-yes { display:block; font-size:42px; line-height:1; color:#a77c31; margin:8px 0 18px; text-shadow:0 0 18px rgba(203,162,76,.22); }
+.intro-dust { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.intro-spark { position:absolute; width:var(--s); height:var(--s); border-radius:50%; opacity:0; background:radial-gradient(circle,#fff 0 18%,rgba(255,248,219,.96) 30%,rgba(210,177,107,.55) 52%,transparent 73%); filter:drop-shadow(0 0 5px rgba(255,255,255,.9)); animation:introTwinkle var(--t) ease-in-out var(--d) infinite; }
+@keyframes introTwinkle { 0%,100%{opacity:0;transform:scale(.2)} 42%{opacity:.8;transform:scale(.8)} 52%{opacity:1;transform:scale(1.25)} 68%{opacity:.3;transform:scale(.55)} }
+#declineScreen .intro-card { max-width:440px; }
+.book-wrapper, .page-progress, .open-hint, .corner-cue { transition: opacity .65s ease; }
+body.intro-active .book-wrapper,
+body.intro-active .page-progress,
+body.intro-active .open-hint,
+body.intro-active .corner-cue { opacity:0; pointer-events:none; }
+@media (max-width:600px){ .intro-card{padding:34px 23px 28px}.intro-card p{font-size:13.5px}.intro-question strong{font-size:25px} }
+
+
+.intro-btn.is-saving{cursor:wait!important;opacity:.88!important}
+.intro-btn.is-saving::before{content:"";display:inline-block;width:13px;height:13px;margin-right:8px;vertical-align:-2px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:responseSpinner .7s linear infinite}
+@keyframes responseSpinner{to{transform:rotate(360deg)}}
+.intro-btn.no.is-saving::before{border-color:rgba(115,87,36,.25);border-top-color:#735724}
+.luna-portrait-wrap{width:126px;height:154px;margin:3px auto 18px;padding:6px;border-radius:50% / 44%;background:linear-gradient(145deg,#d6b56e,#8f6829 48%,#e4ca8b);box-shadow:0 8px 22px rgba(99,69,29,.18),0 0 18px rgba(255,245,211,.8);animation:portraitReveal .9s ease both}
+.luna-portrait-wrap img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 35%;border-radius:50% / 44%;border:2px solid #fff8e8}
+@keyframes portraitReveal{from{opacity:0;transform:scale(.94) translateY(5px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+</style>
+</head>
+
+<body class="intro-active">
+
+<div class="intro-screen" id="proposalScreen">
+    <div class="intro-dust" aria-hidden="true"></div>
+    <section class="intro-card" aria-labelledby="proposalTitle">
+        <div class="intro-eyebrow">A little question from Luna Victoria</div>
+        <div class="luna-portrait-wrap" id="lunaPortrait">
+            <img src="luna-proposal.jpg" alt="Luna Victoria" onerror="this.parentElement.style.display='none'">
+        </div>
+        <p id="personalGreeting" style="display:none"></p>
+        <h1 id="proposalTitle">A Special Place in My Story</h1>
+        <p>As one of Mommy and Daddy’s favorite people, your presence in their lives has always been a blessing.</p>
+        <p>And as I begin my own little journey, they would love for you to be someone I can look up to, learn from, and grow with.</p>
+        <p>If you are willing to accept, I would be so happy to have you play a very special role in my life and in my Christening.</p>
+        <p>Your love, wisdom, and guidance will surely make my journey even more meaningful.</p>
+        <p class="intro-question"><span>Will you be my</span><strong id="godparentRole">Ninong / Ninang?</strong></p>
+        <p class="intro-signoff">With love,<strong>Luna Victoria</strong></p>
+        <div class="intro-actions">
+            <button class="intro-btn yes" id="acceptGodparent" type="button">✦ Yes! I’m honored ✦</button>
+            <button class="intro-btn no" id="declineGodparent" type="button">♡ I’ll be with you in spirit ♡</button>
+        </div>
+    </section>
+</div>
+
+<div class="intro-screen hidden" id="acceptanceScreen">
+    <div class="intro-dust" aria-hidden="true"></div>
+    <section class="intro-card" aria-labelledby="acceptanceTitle">
+        <div class="acceptance-heart">♡</div>
+        <div class="intro-eyebrow">You said yes!</div>
+        <h1 id="acceptanceTitle">Woohoo! My tiny heart is so happy</h1>
+        <span class="acceptance-yes">YES!</span>
+        <p>I’m so excited to have you as my <strong id="acceptedRole">Ninong / Ninang!</strong></p>
+        <p>Thank you for saying yes to being part of my life and this very special milestone.</p>
+        <p>I can’t wait to celebrate my Christening and 1st Birthday with you!</p>
+        <p class="intro-signoff">With tiny hugs and lots of love,<strong>Luna Victoria</strong></p>
+        <button class="intro-btn open-book" id="openInvitation" type="button">✦ Open My Invitation ✦</button>
+    </section>
+</div>
+
+<div class="intro-screen hidden" id="declineScreen">
+    <div class="intro-dust" aria-hidden="true"></div>
+    <section class="intro-card">
+        <div class="intro-eyebrow">With love</div>
+        <h1>Thank you for letting us know 🤍</h1>
+        <p>You’ll always hold a special place in our hearts.</p>
+        <p class="intro-signoff">With love,<strong>Luna Victoria</strong></p>
+        <button class="intro-btn no" id="backToProposal" type="button">Go back</button>
+    </section>
+</div>
+
+
+<div class="magic-layer" id="magicLayer" aria-hidden="true"></div>
+
+<div class="book-wrapper">
+    <div class="book-magic" id="bookMagic" aria-hidden="true"></div>
+    <div id="book">
+        <div class="page"><video src="page1.mp4" muted playsinline preload="metadata"></video></div>
+        <div class="page"><video src="page2.mp4" muted playsinline preload="metadata"></video></div>
+        <div class="page"><video src="page3.mp4" muted playsinline preload="metadata"></video></div>
+        <div class="page"><video src="page4.mp4" muted playsinline preload="metadata"></video></div>
+        <div class="page"><video src="page5.mp4" muted playsinline preload="metadata"></video></div>
+        <div class="page"><video src="page6.mp4" muted playsinline preload="metadata"></video></div>
+
+        <div class="page">
+            <video src="page7.mp4" muted playsinline preload="metadata"></video>
+            <a class="rsvp-yes"
+               href="https://script.google.com/macros/s/AKfycbzqy3SWwhwMpEoDOAHZSm8Sshvpsmir-DmTvdmbeEdl-tTq4Pl36XndYymhe5zAzDuNIQ/exec"
+               target="_blank"
+               rel="noopener"
+               aria-label="Yes, I'll be there"></a>
+            <a class="rsvp-no"
+               href="https://script.google.com/macros/s/AKfycbzqy3SWwhwMpEoDOAHZSm8Sshvpsmir-DmTvdmbeEdl-tTq4Pl36XndYymhe5zAzDuNIQ/exec"
+               target="_blank"
+               rel="noopener"
+               aria-label="Sorry, I can't make it"></a>
+        </div>
+
+        <div class="page"><video src="page8.mp4" muted playsinline preload="metadata"></video></div>
+    </div>
+</div>
+
+<div class="page-progress" id="pageProgress" aria-live="polite">
+    <span class="ornament">✦</span>
+    <span id="pageProgressText">1 / 8</span>
+    <span class="ornament">✦</span>
+</div>
+
+<div class="open-hint" id="openHint">
+    <span class="swipe-arrow">❮</span>
+    <span>Swipe to open the storybook</span>
+</div>
+
+<div class="corner-cue" id="cornerCue" aria-hidden="true"></div>
+
+<script>
+const magicLayer = document.getElementById("magicLayer");
+const bookMagic = document.getElementById("bookMagic");
+const bookElement = document.getElementById("book");
+const pageElements = document.querySelectorAll(".page");
+const videos = document.querySelectorAll(".page video");
+const openHint = document.getElementById("openHint");
+const cornerCue = document.getElementById("cornerCue");
+const pageProgressText = document.getElementById("pageProgressText");
+
+const pageFlip = new St.PageFlip(bookElement, {
+    width: 512,
+    height: 768,
+    size: "stretch",
+    minWidth: 280,
+    maxWidth: 512,
+    minHeight: 420,
+    maxHeight: 768,
+    maxShadowOpacity: 0.45,
+    showCover: true,
+    mobileScrollSupport: false,
+    flippingTime: 800,
+    usePortrait: true,
+    drawShadow: true,
+    useMouseEvents: true
+});
+
+pageFlip.loadFromHTML(pageElements);
+
+function stopAllVideos() {
+    videos.forEach(video => {
+        video.pause();
+    });
+}
+
+function playCurrentVideo() {
+    stopAllVideos();
+
+    const current = pageFlip.getCurrentPageIndex();
+    const video = videos[current];
+
+    if (!video) return;
+
+    try {
+        video.currentTime = 0;
+    } catch (error) {}
+
+    const playPromise = video.play();
+
+    if (playPromise !== undefined) {
+        playPromise.catch(() => {
+            // Muted video normally autoplays. If a browser blocks it,
+            // the first user swipe/tap will trigger another play attempt.
+        });
+    }
+}
+
+function updatePageProgress() {
+    const current = pageFlip.getCurrentPageIndex() + 1;
+    const total = videos.length;
+
+    if (!pageProgressText) return;
+
+    if (current === total) {
+        pageProgressText.textContent = `${current} / ${total} · End of Invitation`;
+    } else {
+        pageProgressText.textContent = `${current} / ${total}`;
+    }
+}
+
+
+
+function seedBookTwinkles() {
+    if (!bookMagic) return;
+
+    /* Fine white/silver sparkles scattered over the actual book. */
+    for (let i = 0; i < 58; i++) {
+        const p = document.createElement("span");
+        p.className = (i % 9 === 0)
+            ? "book-twinkle star"
+            : "book-twinkle";
+
+        p.style.left = `${4 + Math.random() * 92}%`;
+        p.style.top = `${5 + Math.random() * 90}%`;
+
+        const size = (i % 9 === 0)
+            ? 8 + Math.random() * 9
+            : 2 + Math.random() * 5;
+
+        p.style.setProperty("--s", `${size}px`);
+        p.style.setProperty("--t", `${2.1 + Math.random() * 4.2}s`);
+        p.style.setProperty("--d", `${-Math.random() * 6}s`);
+
+        bookMagic.appendChild(p);
+    }
+}
+
+function castFairyTrail() {
+    if (!bookMagic) return;
+
+    bookMagic.querySelectorAll(".trail-dot").forEach(el => el.remove());
+
+    /* Dense but delicate white dust, like a cinematic fairy-magic sweep. */
+    const count = 92;
+
+    for (let i = 0; i < count; i++) {
+        const p = document.createElement("span");
+        p.className = (i % 13 === 0)
+            ? "trail-dot bright"
+            : "trail-dot";
+
+        const t = i / (count - 1);
+        const jitterX = (Math.random() - .5) * 42;
+        const jitterY = (Math.random() - .5) * 54;
+
+        /* Broad soft S-curve across the book. */
+        const sx = -190 + jitterX;
+        const sy = 70 + jitterY;
+
+        const mx = -120 + 245*t + Math.sin(t*Math.PI*2.15)*64 + jitterX*.55;
+        const my = 28 - 92*t + Math.sin(t*Math.PI*1.75)*48 + jitterY*.55;
+
+        const ex = -175 + 350*t + jitterX;
+        const ey = 45 - 55*t + Math.sin(t*Math.PI*2.05)*66 + jitterY;
+
+        p.style.setProperty("--sx", `${sx}px`);
+        p.style.setProperty("--sy", `${sy}px`);
+        p.style.setProperty("--mx", `${mx}px`);
+        p.style.setProperty("--my", `${my}px`);
+        p.style.setProperty("--ex", `${ex}px`);
+        p.style.setProperty("--ey", `${ey}px`);
+        p.style.setProperty("--s", `${2 + Math.random()*5}px`);
+        p.style.setProperty("--delay", `${Math.random()*260}ms`);
+
+        bookMagic.appendChild(p);
+    }
+
+    setTimeout(() => {
+        bookMagic.querySelectorAll(".trail-dot").forEach(el => el.remove());
+    }, 2400);
+}
+
+function castPageMagic(isCoverOpening = false) {
+    if (!magicLayer) return;
+    magicLayer.replaceChildren();
+    const flash=document.createElement("div");
+    flash.className="magic-flash";
+    magicLayer.appendChild(flash);
+    const amount=isCoverOpening?44:32;
+    for(let i=0;i<amount;i++){
+        const s=document.createElement("span");
+        s.className=(i%4===0)?"magic-spark magic-dot":"magic-spark";
+        const a=(Math.PI*2*i/amount)+(Math.random()*.35);
+        const d=(isCoverOpening?165:135)+Math.random()*145;
+        s.style.setProperty("--x",`${Math.cos(a)*d}px`);
+        s.style.setProperty("--y",`${Math.sin(a)*d*.72}px`);
+        s.style.setProperty("--size",`${8+Math.random()*18}px`);
+        s.style.setProperty("--delay",`${Math.random()*180}ms`);
+        s.style.setProperty("--duration",`${1300+Math.random()*600}ms`);
+        magicLayer.appendChild(s);
+    }
+    setTimeout(()=>magicLayer.replaceChildren(),2300);
+}
+
+function hideOpeningCues() {
+    if (openHint) openHint.classList.add("hide");
+    if (cornerCue) cornerCue.classList.add("hide");
+}
+
+/* Try the cover animation immediately. */
+window.addEventListener("load", () => {
+    seedBookTwinkles();
+    updatePageProgress();
+    setTimeout(playCurrentVideo, 250);
+});
+
+/* A user gesture also guarantees another playback attempt on stricter mobile browsers. */
+document.addEventListener("pointerdown", () => {
+    const current = pageFlip.getCurrentPageIndex();
+    const video = videos[current];
+
+    if (video && video.paused && video.currentTime === 0) {
+        video.play().catch(() => {});
+    }
+}, { passive: true });
+
+pageFlip.on("flip", () => {
+    const openedPage = pageFlip.getCurrentPageIndex();
+    hideOpeningCues();
+    updatePageProgress();
+    castFairyTrail();
+    setTimeout(playCurrentVideo, 150);
+});
+
+/* Godparent proposal flow — personalized through Google Sheet using ?id=GP001. */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzVfBbZmOdTNjNCXpXqlLMseipCHqJepsJ5nZ_4HTFiQTJkneIg_u0SlBkcGPkZ76CYQ/exec";
+const proposalScreen = document.getElementById("proposalScreen");
+const acceptanceScreen = document.getElementById("acceptanceScreen");
+const declineScreen = document.getElementById("declineScreen");
+const acceptGodparent = document.getElementById("acceptGodparent");
+const declineGodparent = document.getElementById("declineGodparent");
+const openInvitation = document.getElementById("openInvitation");
+const backToProposal = document.getElementById("backToProposal");
+const godparentRole = document.getElementById("godparentRole");
+const acceptedRole = document.getElementById("acceptedRole");
+
+const params = new URLSearchParams(window.location.search);
+const godparentId = (params.get("id") || "").trim().toUpperCase();
+const personalGreeting = document.getElementById("personalGreeting");
+let currentGodparent = null;
+
+function setButtonsDisabled(disabled, message = "") {
+    [acceptGodparent, declineGodparent].forEach(btn => {
+        if (!btn) return;
+        btn.disabled = disabled;
+        btn.style.opacity = disabled ? ".6" : "1";
+        btn.style.cursor = disabled ? "wait" : "pointer";
+    });
+    if (message && personalGreeting) {
+        personalGreeting.style.display = "block";
+        personalGreeting.textContent = message;
+    }
+}
+
+async function loadGodparent() {
+    if (!godparentId) {
+        setButtonsDisabled(true, "This proposal link is missing its godparent ID. Please ask Mommy or Daddy for the correct link.");
+        return;
+    }
+    setButtonsDisabled(true, "Preparing your special proposal…");
+    try {
+        const res = await fetch(`${APPS_SCRIPT_URL}?id=${encodeURIComponent(godparentId)}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || "Godparent not found.");
+        currentGodparent = data;
+        const role = String(data.role || "").trim();
+        if (!/^(ninong|ninang)$/i.test(role)) throw new Error("Godparent role is missing.");
+        const prettyRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+        godparentRole.textContent = `${prettyRole}?`;
+        acceptedRole.textContent = `${prettyRole}!`;
+        if (personalGreeting) {
+            personalGreeting.style.display = "block";
+            personalGreeting.innerHTML = `Dear <strong>${escapeHtml(data.name)}</strong>,`;
+        }
+        setButtonsDisabled(false);
+    } catch (err) {
+        setButtonsDisabled(true, `We couldn’t open this personalized proposal. ${err.message}`);
+    }
+}
+
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+}
+
+async function saveGodparentResponse(response, button) {
+    if (!currentGodparent || !godparentId || !button) return false;
+
+    const original = button.textContent;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+    [acceptGodparent, declineGodparent].forEach(btn => { if (btn) btn.disabled = true; });
+    button.classList.add("is-saving");
+    button.textContent = "Saving your answer…";
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append("id", godparentId);
+        formData.append("response", response);
+
+        const res = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            body: formData,
+            cache: "no-store",
+            signal: controller.signal
+        });
+        if (!res.ok) throw new Error(`Server returned ${res.status}.`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || "Could not save response.");
+        return true;
+    } catch (err) {
+        alert(err && err.name === "AbortError"
+            ? "Saving took too long. Please check your connection and tap the button again."
+            : "Your answer could not be saved yet. Please check your connection and try again.");
+        return false;
+    } finally {
+        clearTimeout(timeoutId);
+        button.classList.remove("is-saving");
+        button.textContent = original;
+        [acceptGodparent, declineGodparent].forEach(btn => { if (btn) btn.disabled = false; });
+    }
+}
+
+loadGodparent();
+
+function seedIntroDust(screen) {
+    const layer = screen?.querySelector(".intro-dust");
+    if (!layer || layer.childElementCount) return;
+    for (let i = 0; i < 42; i++) {
+        const p = document.createElement("span");
+        p.className = "intro-spark";
+        p.style.left = `${4 + Math.random()*92}%`;
+        p.style.top = `${3 + Math.random()*94}%`;
+        p.style.setProperty("--s", `${2 + Math.random()*7}px`);
+        p.style.setProperty("--t", `${2.2 + Math.random()*4.5}s`);
+        p.style.setProperty("--d", `${-Math.random()*6}s`);
+        layer.appendChild(p);
+    }
+}
+[proposalScreen, acceptanceScreen, declineScreen].forEach(seedIntroDust);
+
+function showIntro(target) {
+    [proposalScreen, acceptanceScreen, declineScreen].forEach(el => el?.classList.add("hidden"));
+    target?.classList.remove("hidden");
+}
+
+acceptGodparent?.addEventListener("click", async () => {
+    if (await saveGodparentResponse("Yes! I'm honored", acceptGodparent)) showIntro(acceptanceScreen);
+});
+declineGodparent?.addEventListener("click", async () => {
+    if (await saveGodparentResponse("I'll cheer you on from afar", declineGodparent)) showIntro(declineScreen);
+});
+backToProposal?.addEventListener("click", () => showIntro(proposalScreen));
+openInvitation?.addEventListener("click", () => {
+    acceptanceScreen.classList.add("hidden");
+    document.body.classList.remove("intro-active");
+    setTimeout(() => {
+        castFairyTrail();
+        playCurrentVideo();
+    }, 420);
+});
+
+</script>
+
+</body>
+</html>
