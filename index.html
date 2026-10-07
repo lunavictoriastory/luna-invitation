@@ -819,7 +819,10 @@ async function loadGodparent() {
         if (personalGreeting) {
             personalGreeting.style.display = "block";
             personalGreeting.innerHTML = `Dear <strong>${escapeHtml(data.name)}</strong>,`;
-        }
+        const personalLoading = document.getElementById("personalLoading");
+if (personalLoading) {
+    personalLoading.style.display = "none";
+}
         setButtonsDisabled(false);
     } catch (err) {
         setButtonsDisabled(true, `We couldn’t open this personalized proposal. ${err.message}`);
