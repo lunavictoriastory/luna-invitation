@@ -810,10 +810,7 @@ async function loadGodparent() {
     setButtonsDisabled(true, "Preparing your special proposal…");
 
     try {
-        const res = await fetch(
-            `${APPS_SCRIPT_URL}?id=${encodeURIComponent(godparentId)}`,
-            { cache: "no-store" }
-        );
+       const res = await fetch(`${APPS_SCRIPT_URL}?id=${encodeURIComponent(godparentId)}`);
 
         const data = await res.json();
 
