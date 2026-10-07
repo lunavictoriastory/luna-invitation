@@ -840,14 +840,14 @@ async function saveGodparentResponse(response, button) {
 
     try {
         const formData = new URLSearchParams();
-        formData.append("id", godparentId);
-        formData.append("response", response);
+formData.append("id", godparentId);
+formData.append("response", response);
 
-        const res = await fetch(APPS_SCRIPT_URL, {
-            method: "POST",
-            body: formData,
-            cache: "no-store",
-            signal: controller.signal
+const res = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: formData,
+    cache: "no-store",
+    signal: controller.signal
         });
         if (!res.ok) throw new Error(`Server returned ${res.status}.`);
         const data = await res.json();
