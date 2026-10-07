@@ -819,6 +819,7 @@ async function loadGodparent() {
         if (personalGreeting) {
             personalGreeting.style.display = "block";
             personalGreeting.innerHTML = `Dear <strong>${escapeHtml(data.name)}</strong>,`;
+            personalGreeting.style.display = "block";
         const personalLoading = document.getElementById("personalLoading");
 if (personalLoading) {
     personalLoading.style.display = "none";
